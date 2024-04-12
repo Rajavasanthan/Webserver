@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const app = express();
 const URL =
-  "";
+  "mongodb+srv://vasanth:admin123@cluster0.rqnnzqs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 app.use(express.json());
 app.use(
@@ -23,7 +23,11 @@ app.get("/users", async (req, res) => {
     const connection = await MongoClient.connect(URL);
     const db = connection.db("b56_wdt");
     const collection = db.collection("users");
-    const users = await collection.find({}).toArray();
+    const users = await collection
+      .find({
+        isDeleted: { $exists: false },
+      })
+      .toArray();
     await connection.close();
     res.json(users);
   } catch (error) {
@@ -53,21 +57,68 @@ app.post("/user", async (req, res) => {
   }
 });
 
+app.get("/user/:userId",async (req,res) => {
+  try {
+    const connection = await MongoClient.connect(URL); // mongodb+srv://<credentials>
+    const db = connection.db("b56_wdt"); // use b56_wdt
+
+    // db.users.insertOne({})
+    const collection = db.collection("users");
+    const userData= await collection.findOne({_id:new ObjectId(req.params.userId)});
+
+    await connection.close();
+    res.json(userData);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+})
+
 // Edit
-app.put("/user/:userId", (req, res) => {
-  let params = req.params.userId;
-  let index = users.findIndex((user) => user.id == params);
-  req.body.id = params;
-  users[index] = req.body;
-  res.json({ message: "User Updated" });
+app.put("/user/:userId", async (req, res) => {
+  try {
+    const connection = await MongoClient.connect(URL);
+    const db = connection.db("b56_wdt");
+    const collection = db.collection("users");
+    await collection.updateOne(
+      { _id: new ObjectId(req.params.userId) },
+      { $set: req.body }
+    );
+    await connection.close();
+    res.json({ message: "User Updated" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Something Went Wrong" });
+  }
+
+  // let params = req.params.userId;
+  // let index = users.findIndex((user) => user.id == params);
+  // req.body.id = params;
+  // users[index] = req.body;
+  // res.json({ message: "User Updated" });
 });
 
-app.delete("/user/:userId", (req, res) => {
-  let params = req.params.userId;
-  // users = users.filter((user) => user.id != params);
-  let index = users.findIndex((user) => user.id == params);
-  users.splice(index, 1);
-  res.json({ message: "User Deleted" });
+app.delete("/user/:userId", async (req, res) => {
+  // let params = req.params.userId;
+  // // users = users.filter((user) => user.id != params);
+  // let index = users.findIndex((user) => user.id == params);
+  // users.splice(index, 1);
+  // res.json({ message: "User Deleted" });
+
+  try {
+    const connection = await MongoClient.connect(URL);
+    const db = connection.db("b56_wdt");
+    const collection = db.collection("users");
+    await collection.updateOne(
+      { _id: new ObjectId(req.params.userId) },
+      { $set: { isDeleted: true } }
+    );
+    connection.close();
+    res.json({ message: "User Deleted" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
 });
 
 app.listen(3000);
