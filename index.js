@@ -2,8 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ObjectId } = require("mongodb");
 const app = express();
-const URL =
-  "mongodb+srv://vasanth:admin123@cluster0.rqnnzqs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const URL = process.env.DB;
 
 app.use(express.json());
 app.use(
@@ -20,6 +19,7 @@ app.get("/", (req, res) => {
 
 app.get("/users", async (req, res) => {
   try {
+    console.log(process.env.DB)
     const connection = await MongoClient.connect(URL);
     const db = connection.db("b56_wdt");
     const collection = db.collection("users");
