@@ -33,7 +33,6 @@ function authenticate(req, res, next) {
 }
 
 function permit(module) {
-  // console.log(allowedUser)
   return (req, res, next) => {
     console.log(req.method);
     const permissions = req.payload.permissions[module]; // ["GET","POST"]
